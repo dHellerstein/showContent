@@ -1,0 +1,231 @@
+<html><head>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
+<title>Test wsMoveBoxes   </title>
+
+<style type="text/css">
+.v3_shadowBox {
+    position:fixed;
+    opacity:1.0;
+    left:10%;
+    top:10%;
+    width:70%;
+    height:40%;
+    xoverflow:auto;
+    margin:5px;
+    padding:3px;
+    border:2px solid gold;
+    background-color:#ededed;
+    border-radius:5px;
+    z-index:6;
+     box-shadow: 20px 20px 30px 20px tan ;
+}
+</style>
+
+<script type="text/javascript" src="jquery-3.6.0.min.js"></script>
+<script type="text/javascript" src="wsMoveBoxes.js"></script>
+
+<script type="text/javascript">
+var wmsm;
+
+function initit(i) {
+  wsm=wsMoveBox ; // less typing!
+
+   wsMoveBox.ws_Create('v3',{
+         'expandBox':1,'noMover':2,'zIndexShow':1,
+         'callFunc':'doit1' });
+
+   wsm.ws_Create('v2',{
+         'top':'58%','left':'15%','width':'78%','height':'36%',
+         'expandBox':1,'zIndexShow':1,
+         'noMover':4,'moveTopBarFat':1,
+         'callFunc':'doit1 ,show text of message',
+         'escapeOrder':2});
+
+   $(document).keyup(wsm.ws_doEsc) ; // May 2020 -- consider using  ws_escapeHandler function in more complex environments
+
+
+   $('#fooButton').on('click',wsm.ws_DoResize);
+
+   $('#closeV2').on('click',wsm.ws_Close);
+}
+
+
+function doit1(e){
+  atext=e.text();
+  alert('Example of NE arrow function. Displaying the content of the box: \n'+ atext) ;
+}
+
+function showit(i){
+  if (i==1) {
+     let dd=wsm.ws_DoResize(0,'v2',1);
+     let  fo=dump2(dd,'none',6,'Position of v2');
+     $('#showPosv2').html('<pre>'+fo+'<pre>');
+  } else if (i==3) {
+     let dd=wsm.ws_DoResize({'top':'-10%','left':'-10%'},'v2');
+     let  fo=dump2(dd,'none',6,'Position of v2');
+     $('#showPosv2').html('<pre>'+fo+'<pre>');
+  } else if (i==4) {
+     let dd=wsm.ws_DoResize({'top':'-55%','left':'-25%'},'v2');
+     let  fo=dump2(dd,'none',6,'Position of v2');
+     $('#showPosv2').html('<pre>'+fo+'<pre>');
+
+  } else {
+     let dd= wsm.ws_DoResize({'top':'+0'},'v2');
+     let  fo=dump2(dd,'none',6,'Position of v2');
+     $('#showPosv2').html('<pre>'+fo+'<pre>');
+
+  }
+}
+
+ function dump2(aobj) {
+ let amess='<ul>';
+ for (let awhat in aobj) {
+   amess+='<li>'+awhat+ '= <tt> '+aobj[awhat]+'</tt>';
+ }
+ amess+='</ul>';
+ return amess;
+}
+
+</script>
+
+
+</head>
+
+<body onload="initit()" >
+
+ <h3>Test wsMoveBox (v2.1.0)</h3>
+<input type="button" value="Toggle box2 " onClick="wsm.ws_DoClose('toggle','v2')">
+
+This is background .....
+
+<br>
+  Alert message
+<br>
+           The alert message will be displayed in a javascript alert whenever the radio button is changed.
+           Thus,  ith a   is the default, that can be overridded on a button specific basis by using an
+
+<hr>
+           Shortcut: include an 'alert="message"' in the  (and do NOT include an   child node).
+           Confirm can be specified with in
+           A confirmation box will be displayed whenever the button is changed; if CANCEL is chosen the change will be negated.
+           As with  a default confirm can be specified (within , or you can specify button specific confirmation messages.
+<br>
+           Shortcut: include an 'confirm="message"' in  (and do NOT include an   child node).
+<br>
+
+           If specified, when the form is submitted a verification function is called.
+           Thus,   is only useful if there is a parent  !
+<br>
+           You can specifiy the function by using the call attribute.
+<br>
+           However, if you do not specify a call, then a generic function is called that checks to see if a button was chosen within this set
+           (identified by aname).
+<br>
+
+
+<!-- SPecify the moveable boxes. These can be specified anywhere, since their position is fixed -->
+
+
+<div id="v2" style="background-color:cyan;border:1px solid red;z-index:22;overflow:hidden ">
+
+Moveable box # 2. -- used with
+<table cellpadding="5">
+<tr valign="top"><td width="45%">
+<pre>
+   wsm.ws_Create('v2',{
+         'top':'68%','left':'15%','width':'78%','height':'26%',
+         'expandBox':1,'zIndexShow':1,
+         'callFunc':'doit1 ,show text of message',
+         'escapeOrder':2});
+and has
+   style="background-color:cyan;border:1px solid red;z-index:2;overflow:hidden "
+</pre>
+<menu>
+<li>Since a background color is specified, it is used
+<li>Since <tt>z-index</tt> is in the style, it is used instead of <tt>zIndexShow':1</tt>
+<li>Since overflow not specified, a scroll bar is added
+</menu>
+</td>
+<td width="40%">
+<input type="button" value="original info" onClick="showit(1)">
+<input type="button" value="return to original  " onClick="showit(2)">
+<input type="button" value=" move toward lower right  " onClick="showit(3)">
+<input type="button" value=" move less toward lower right    " onClick="showit(4)">
+
+<div id="showPosv2" style="border:2px groove blue" title="position shown here "> position info displayed here </div>
+</td>
+</tr>
+</table>
+<p>
+<p>
+<input type="button" value="Another close button (jquery assigned)" id="closeV2" >
+<hr>
+
+
+</div>   <!-- end of movebable box #2 -->
+
+
+<div id="v3"  class="v3_shadowBox">
+<span style="color:blue">Note use a of scrollable &lt;div&gt; containing most of the content within  a moveable box  &lt;div&gt; -- this ensures that the box controls are always visible.</span>
+<div id="v3b" style="overflow:auto;height:96%;width:99%">
+Moveable box # 3
+<pre>
+   wsm.ws_Create('v3',{
+         'expandBox':1,'noMover':2,'zIndexShow':1
+         'callFunc':'doit1' });
+and has
+  class="v3_shadowBox"
+</pre>
+<menu>
+<li> the  position is set by the  v3_shadowBox class
+<li> my_shadowedBox which has overflow:hidden. So there aren't any scroll bars!
+<br> and with <tt>z-index:6</tt> is will be on top of v2
+<li> since <tt>noMover:2</tt>d, you can only move box by clicking on the <tt>+</tt> in the upper right corner.
+<li> <input type="button" value="close this movebox (inline version)! " title="an additional close button" onClick="wsm.ws_Close(this)" >
+</menu>
+
+<pre>
+The class is
+.v3_shadowBox {
+    position:fixed;
+    opacity:1.0;
+    left:10%;
+    top:10%;
+    width:70%;
+    height:50%;
+    overflow:auto;
+    margin:5px;
+    padding:3px;
+    border:2px solid gold;
+    background-color:#ededed;
+    border-radius:5px;
+    z-index:6;
+     box-shadow: 20px 20px 30px 20px tan ;
+}
+
+
+<p><hr>
+<input type="button" value="half size" how="width:50%,height:50%" id="fooButton" >
+
+   <em>Notes:</em>
+<menu style="margin:0px 5px 5px 5px">
+<li>Asset balance is as at the beginning of the year -- <u>before</u> interest earnings and withdrawals
+<li> Total withdrawals (summed over all months of the year) is displayed:
+ <br> &nbsp; &hellip; <em>real</em> and <em>fixed</em> withdrawals occur on the first day of the year
+ <br> &nbsp; &hellip; <em>loan </em> withdrawals, and income earnings, occur on the first day of a month (for each month in a year).
+ <br> &nbsp; &hellip;  Net monthly <em>loan</em> withdrawals are used to compute total yearly withdrawals = <tt>loan payments - income earned</tt>
+<li> Total interest earnings (summed over all months of the year) is displayed:
+ <br> &nbsp; &hellip; <em>interest earnings</em> occur on the last day (of each month of the year) -- hence, <u>after</u> net loan  withdrawal (if a loan is active) occurs.
+<li> Remaining principal is at beginning of year
+<li>Net year payments is the sum (over months in a year) of loan payments - income generated
+<li>Net sale value are proceeds if sold at end of year (inflated value of property - remaining principal)
+
+</menu>
+
+</div>
+</div>
+
+<!-- end of v3 -->
+
+</body>
+</html>

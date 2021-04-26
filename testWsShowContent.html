@@ -1,0 +1,192 @@
+<!DOCTYPE HTML>
+<html><head><title>Test  wsShowContent </title>
+<meta charset="utf-8">
+
+<style type="text/css">
+/* used in the doCloser2 fadeout option (for test2) */
+.bigClose {
+  font-size:180%;
+  background-color:red;
+  border:2px solid blue ;
+}
+</style>
+
+<script type="text/javascript" src="jquery-3.6.0.min.js"></script>
+<script type="text/javascript" src="wsMoveBoxes.js"></script>
+<script type="text/javascript" src="wsShowContent.js"></script>
+<script type="text/javascript" src="wsShowContent_resize.js"></script>
+
+
+<script type="text/javascript">
+
+// ====
+// create two showContent boxes, and populate them.
+
+function doit1(i) {
+
+// now initialize the "test3" showContent box
+
+  let phdr3= '| Test 3 Box |'
+  wsShowContent.init('test3',{'zIndex':56,'noShadow':1,'zIndexShow':1,'noMover':3, 'enableEsc':15,       // the test3 showCOntent box
+                      'top':'3%','left':'50%','width':'42%','height':'55%','moveTopBarFat':1,
+                       'expandBox':0,'noHistory':0,'noTopScroll':1,'header':phdr3});
+
+  let thd3='<input type="button" class="ws_showContent_minimize_button" value="Minimize this!" where="myMaximizeButton3" > ' ;
+  let content3='hello world... <span id="thisAgain" style="border-bottom:1px dashed blue">again</span>';
+  let addEvents=[]; addEvents.push(['click','#thisAgain',doAlert1]);     // example of adding events to elements written to the showContent box
+  let glug3= wsShowContent.write(content3, {'id':'test3','doMinimize':1,'header':thd3,'events':addEvents });
+
+// now initialize the "test2" showContent box
+
+  let ahd2='| Test 2 Box |'
+  wsShowContent.init('test2',{'zIndex':136,'noShadow':1,'zIndexShow':1,'noMover':4,'enableEsc':13,    // the test2 showCOntent box
+                      'top':'49%','left':'6%','width':'42%','height':'35%',
+                      'noHistory':1,'noTopScroll':0,
+                      'header':ahd2,
+                      'noCloser2':'FadeOut!,close this with 2 second fadeout!!,bigClose,2000'});
+
+  let astuff=$('#stuff').html();   // read content from an existing container, and copy to this showContent box
+  let ahdr='<input type="button" value="View resize menu!" onClick="wsShowContent_resizeMenu(this)">   ' ;
+  ahdr+='<input type="button" value="Content of inBetween #1" title=" demos of find() wsShowContent function" onClick="findInBetween(this)">   ' ;
+  ahdr+='<input type="button" class="ws_showContent_minimize_button" value="Minimize" where="myMaximizeButton2" > '   ;
+  let aglug2=wsShowContent.write( astuff ,{'id':'test2','header':ahdr,'doMinimize':'MinThis'});
+
+ //wsShowContent.headers(thd,aglug2,1);   // add a minimize button to the transient headers
+}
+
+//============
+// event functon
+function doAlert1(aevt) {
+ let e1=wsShowContent.ws_argJquery(aevt);
+ let goo=e1.html();
+ alert(goo);
+}
+
+//========
+// Test of wsShowContent.find --- find stuff in the inBetween div of test3
+function findInBetween(athis) {
+     let s1='#inBetween1';
+     let e2=wsShowContent.find(s1,'test2');
+     let aa=e2.html();
+     alert('Message in inBetween='+aa);
+}
+
+//========
+// Dynamic updating of content and header
+function updateTest3(ith) {
+ if (ith==1) {
+    let e1=$('#updateHeaderTest3');
+    let hval=e1.val();
+    let hnow=wsShowContent.actions('test3','get','header','t');
+    hval=hnow+' ' +hval
+     wsShowContent.header(hval,'test3',1) ;
+ } else if (ith==2) {
+    let e2=$('#updateContentTest3');
+    let cval=e2.val();
+    wsShowContent.content(cval,'test3',1) ;    // note use of 1 as third argument -- to ensure that minimize button works
+  } else if (ith==3) {
+    let e2=$('#updateContentTest3');
+    let cval=e2.val();
+    wsShowContent.write(cval,{'id':'test3','contentOnly':1}) ;
+  } else {
+    let e2=$('#updateContentTest3');
+    let cval=e2.val();
+    wsShowContent.write(cval,{'id':'test3','contentOnly':0}) ;
+  }
+  return 1;
+}
+</script>
+</head>
+
+
+<body onLoad="doit1()">
+
+
+<!-- these "maximize" buttons are displayed WHEN a showContent box is minimized. Clicking on them will redisplay the "minimzed" box -->
+<span class="ws_showContent_maximize" id="myMaximizeButton3" title="re display test3!" >&#8661;</span>
+<span class="ws_showContent_maximize" id="myMaximizeButton2" title="re display test2!" >&#8663;</span>
+
+<!-- toggle the test2 showContent box. -->
+<input type="button" value="Toggle Test2 box " onClick="wsShowContent.toggle('test2')" >
+
+Hello world.
+
+<!-- front end to dynamic updating of transient header and content -->
+<table style="border:3px solid blue;margin:5px" cellpadding="5" rules="rows">
+<caption>Update test3</caption>
+<tr><th><input type="button" value="Append to header" onClick="updateTest3(1)"> Header:</th>
+   <th> <input type="text" size="50" id="updateHeaderTest3" title="content to copy to test3 header"></th>
+</tr>
+<tr>
+  <th><input type="button" value="Append to content" onClick="updateTest3(2)">
+   <br><input type="button" value="Reset content (retain headers)" onClick="updateTest3(3)">
+   <br><input type="button" value="Reset content (remove headers)" onClick="updateTest3(4)">
+</th>
+  <th> <textarea rows="5" col="60" id="updateContentTest3" title="content to copy to test3 content"></textarea></th>
+</tr>
+</table>
+
+
+<!-- this stuff is copied to the test3 showContent box -->
+
+<div id="stuff" style="display:none" title="copy from here to showContent div 'test2'"> <pre>
+Description of wsShowContent library -- a front-end to wsMoveBoxes
+
+These functions are used to dynamically write content (HTML or text) to a moveable/resizeable DIV (or other container).
+The notion: one creates a container (such as a DIV)  which we call a "showContent" container
+     This container has content you would like the end user to be able to move, or resize.
+     And it can be dynamically updated!
+
+<div style="background-color:tan;margin:3px" id="inBetween1">Stuff inbetween #1! </div>
+
+Notes:
+   * wsShowContent requires wsMoveBoxes.js.
+   * testWsShowContent.html contains a demo of wsShowContent
+
+I. Installing
+  wsShowContent uses jQuery and a few other libraries
+  Hence,  use the following in your html file:
+
+<div style="background-color:orange;margin:5px" id="inBetween2">Stuff inbetween #2! </div>
+
+
+II. Basic useage
+
+ In a javascript function (say, an .onLoad function), call:
+
+    ws_showContent_init('anId',opts)
+
+  where
+        anId : the id of a container (a DIV) that will created. This is where content will be written to.
+              If anId=0 or '',  or if no arguments are used (that is, ws_showContent_init() is called),
+              an id of 'ws_showContent_main' is used.
+
+              You can create multiple, independent, "showContent" containers by calling ws_showContent_init with different ids.
+
+        opts: an associative array with a number of options. If not speciifed, defaults are used.  See below for more details
+
+  This will create, and add to the bottom of the html document, a container with an id of  "anId", that is setup to be a moveable box
+  (using some default options).
+
+     *  This container has an upper "header" -- usually 1 em high --that is not scrollable.
+     *  And a lower "content" -- using the rest of the container -- that is scrollable.
+
+  After creating this showContent box, you can add content to it using
+    ws_showContent(yourHtmlStuff,'anid')
+  And you can immediately hide it using
+    ws_showContent_close('anid');
+
+  In addition to "moveable box" controls (resize, etc) -- a few other controls can be added to the header row. These include
+  "scroll to top of content" button, and "view prior or next" content icons.
+   
+       *** Please see wsMoveBoxes.txt for a list of the moveable-box options  ***
+
+  It is easy to create several different, and independent,showContent containers. Just be sure ...
+      * to specify unique ids
+      * it is wise to specify a different screen location for each one -- so they do not overlap.
+      * be careful when you use ws_showContent to write content to these containers -- you must specify an 'id' in the options (see below).
+</pre>
+</div>  <!-- end of the stuff container -->
+
+</body>
+</html>

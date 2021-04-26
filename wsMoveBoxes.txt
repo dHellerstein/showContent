@@ -1,0 +1,436 @@
+April 2021. Daniel Hellerstein (danielh@crosslink.net)
+
+Description of wSurvey's wsMoveBoxes library
+
+These functions will create a moveable/resizeable DIV (or other container) that will work under all browsers.
+The jslib/examples/testMoveBoxes.htm contains a demo of wsMoveBoxes
+
+    Suggestion: consider using wsShowContent --  which uses wsMoveBoxes to implement dynamic content updating in moveable containers!
+
+I. Installing
+
+ wsMoveBoxes uses jQuery
+
+ Hence, you could use the following in a html file:
+
+  <script type="text/javascript" src="jquery-3.6.0.min.js"></script>  <!-- or your preferred version of jQuery  -->
+  <script type="text/javascript" src="wsMoveBoxes.js"></script>
+
+II. Basic useage
+
+   When loaded, wsMoveBoxes.js will create a wsMoveBox object. Several public functions of this object are used!
+
+  1) Create a container (such as a <div>...</div>)  which we call the "moveable box".
+     This container contains content you would like the end user to be able to move, or resize.
+     It may be dynamically updated!
+
+  2) Call wsMoveBox.ws_Create to add various buttons and event listeners -- that makes this container moveable and resizable.
+
+
+  Example:
+
+     <div id="myMoveableBox" style="background-color:cyan;border:1px solid red">
+        Some html and other stuff here -- maybe updated dynamically!
+     </div>
+
+  And in an initialization javascript function:
+
+    wsMoveBox.ws_Create('myMoveableBox',{optional specs})
+
+
+II. Setups
+
+   There must be an element (say, a <DIV>) that already exists and has an id.
+
+   The easiest way to convert a containter into  a moveable box is with wsMoveBox.ws_Create
+
+          wsMoveBox.ws_Create((moveBoxId)
+   where moveBoxId is a string variable containing the id of the container. For example:
+          wsMoveBox.ws_Create('myMoveableBox');
+
+
+    After this call, the container  (with moveBoxId id) will have a
+         * a fixed position in the middle of the screen;
+         * close and move button in the   upper right corner.
+         * all the corners will have an appropriate resize button (directionally correct).
+         * scroll bars will be added if an overflow style was not specified
+         * a light gray background if a background-color was not specified
+         * a black border if a border was not specified
+
+   Or, you can specify options, including where to place this move box, using:
+
+       wsMoveBox.ws_Create(moveBoxId,opts)
+
+    where opts is  an associative array, with the following indices -- top, left, width, and height are the most commonly used!
+       
+        'addOverflow':  if 1, and if the box being converted into a moveable box has a 'visible' overflow, convert to 'auto' overflow.
+
+        'callFunc': afunctionName (as a string). Include a "call this function" button.
+                Call the afunctionName (a string) function, with 1 argument -- the jQuery object of the message box.
+                If no such function, error.
+                Alternate: 'function,title':   A CSV. First item is the function name, 2nd is the title to be displayed on mouseOver
+                Examples:
+                      'callFunc':'myCallBack1'
+                      'callFunc':'showInNewWindowNow,show content in a new window '
+                For: example, a button to show the content of the moveable box in a new browser window.
+
+               If callFunc is specified, a NE double arrow icon is included in the upper right corner of the moveable box.
+
+        'expandBox': 0 or 1 (default=0). If 1, include a "expand to nearly all of parent" button (typically, the parent is the full
+                     browser window)
+
+
+        'escapeOrder':  integer value. Higher integer values are hidden first when esc key hit.
+             This is useful if more than one moveable box is created.
+             If not specified, time of creation is used (so last created is hidden first)
+
+             This value is used as the "escIndex" attribute for the moveable box -- for use with the
+             ws_escHandler function.  Note that higher values mean "close this first".
+             The default values (current timestamp) are likely to be always the highest values of escIndex!
+
+             12 April 2020: This is somewhat deprecated. It may be better to use the ws_escHandler function
+
+        'height':  height of box (% of px)
+
+        'left' : left of box (% or px)
+
+        'moveTopBarFat'  : 0 or 1. Height of the "top border" of the moveable box.
+           This is used if noMover=0, 3  or 4.
+           If 1, the "top border" will be 18px high
+           If 0 (the default), 6px.
+           With these values of noMover, the box can be moved by clicking (and holding the mouse button down) on the top bar.
+           A "fat" top bar is an easier target to click on -- but takes up space (so it can interfere with content at the top
+           of the moveable box -- such as the "header" portion of a ws_showContent containter.
+
+        'moveIcon' : a string (such as an html entity'). The icon to use for the "move box"
+          If not specified, &#9649 (a plus sign) is used.
+             Example: 'moveIcon':'&#9995;'   (an open hand)
+
+          Note: moveIcon can NOT contain html!
+                moveIcon is NOT shown if noMover equals 0 or 1
+
+        'noCloser', 'noResizer','noHider':  0 or 1. If 1, the closer/mover/resizer/hide buttons are NOT shown
+                                                    If 0 or not specified, these buttons will be displayed.
+           noCloser : the close button (a 'x');
+           noResizer: the 4 resize buttons
+                     Special value: noResizer:2 to have a single resizer button (in the NE corner)
+           noHider: a small button that when clicked hides all the other buttons. It remains (displayed in upper left corner) -- 
+                    and when clicked again redisplays the other buttons.  Derault is 1 (dislay this hider button)
+                    
+                    Special case: if noHider:0 and noResizer:1, clicking and re clicking this button causes a resize NE corner resize
+                                   button to be displayed.
+
+        'noMover' : 0,1, 2, 3 or 4.
+              0 means "show mover box button as a bar across top of box".
+              1: do not show,
+              2: use a button in the upper right corner,
+              3: top bar and upper right corner button
+              4: 3, and a lower right corner button
+
+           Notes:
+            * If one uses "top bar only" -- sometimes the top of the box can move off the screen, and you won't be able to access the move button!
+            * A topbar will be float above the top of the moveable box. This is done so that the bar will not interfere
+              with content at the top of the box. In particular, the header content specified using ws_showContent.
+
+        'noRestoreSize' : 0 or 1 (0 is the default)
+                       If 1, the restore to original size button is NOT shown
+                       If 0 or not specified, the restore to original size button will be displayed.
+
+                       Clicking on this button will reset the size of the moveable box to its original size (the specified in wsMoveBox.ws_Create).
+
+        'noTips' :  0 or 1 (0 is the default).
+                       If 1, the show tips button is NOT shown
+                       If 0 or not specified, the tips button will be displayed.
+
+                       Clicking on this button will toggle display of a description of move box control buttons.
+                       For details, see wsMoveBox.ws_desc below.
+
+        'returnJquery' : if 1 (the default), then wsMoveBox.ws_Create returns a jQuery object pointing to this container.
+                          If not specified, or not 1, returns a '1'
+
+        'removeClass' : a list of classes to remove from the container before converting it into a moveable box
+                      '*' means "remove all classes".
+                      If specified, the list of classes removed is retained (as an oldClass) attribute, and these classes are
+                      restored if you use wsMoveBox.ws_Remove.
+
+        'top' : top of box (% or px)
+        'width':  width of box (% of px)
+
+        'zIndexShow': 0 or 1. If 1, include a button to put this moveable box above all other moveable boxes -- give it a higher-zindex.
+             Or, if RMB hit, move it behind (give it a lower z-index)l
+             To prevent problems, the minimum z-index is 0. Thus, RMB to move a box "back" will fail when the "smallest" z-index (of
+             all moveable boxes) is 0.
+             We recommend using relatively high values for   z-indexes if you specify multiple moveable boxes (say, 50).
+             Note that if no z-index is specified (in a moveable box), a value of 1 is assigned to the moveable box.
+
+   Example:  show NO buttons (assume a class specified in v3 that contains location and size styles):
+
+        wsMoveBox.ws_Create('v3',{'expandBox':0,'callFunc':0,'zIndexShow':0,'noCloser':1,'noMover':1,'noResizer':1,'noHider':1});
+
+
+   Note: an element converted into a moveable box will have a ws_moveBox class added to it.
+      This may be useful to find other elements in the same moveable box as some other element.
+      For example, if 'evt' is a jQuery object (say, derived from the argument to an event handler for a .click event)
+         e1=evt.closest('.ws_moveBox');
+         e2=e1.find('theOtherDiv');
+         ... do someting to theOtherDiv
+
+
+ Special 'string' values of opts (not an associative array)
+
+
+   '*' : use defaults (middle of scrren). If opts is not specified, '*' is used.
+   '0' : do NOT auto set size and position -- this assumes that the container has a class (or style) that sets top, left, height, and width.
+          For example, uses class="ws_shadowedBox"  (as used in examples/testMoveBoxes.htm)
+
+  'distanceToTop distanceToRight distanceToBottom distanceToLeft' : this is deprecated.
+      where each distance can be 'xx%' or 'nnpx'
+          For example: '20% 25% 50% 20%'
+      The moveable box will cover the area of the screen specified using these 'distanceTo' values (you can think of them as
+      equivalent to the margin and padding format)
+
+II.a.  Some useful functions
+
+function wsMoveBox.ws_Remove(ebox)
+
+   Remove moveBox attributes from a container
+
+     ebox : a string containing the id of the move box, or the jquery object of the moveable box.
+           In either case, the container MUST have a class of ws_moveBox (if not, an error messages is displayed)
+
+     All move box attributes and content (such as the various expansion arrows and move icons) are removed.
+     If a "removeClass" was specified, all removed classes are restored.
+     And -- all styles are removed.
+
+     Thus: any inline style assigned to the container before it was converted into a moveable box will be REMOVED by
+            wsMoveBox.ws_Remove.
+
+
+function wsMoveBox.ws_DoClose(anaction,e2)
+
+  Close (or hide) a moveableBox   -- or open  -- or return visiblity flag
+
+    anaction: an action: 'hide' or 'close' or 'open' or 'visible'.
+                'open' or 'show' : open (display) the movebox
+                 'hide'  : hide the move box -- retains the state of the "hide buttons" and "expand"
+                'close'   : resets (buttons are shown, unexpanded)
+                 'visible': returns 0 if e2 is visible, 0 if not.
+     e2 : a string containing the id of the move box, or the jquery object of the moveable box.
+           In either case, the container MUST have a class of ws_moveBox (if not, an error messages is displayed)
+
+ Note: a single argument version of this is used by the generic "close button" handler (the button automatically added to containers by wsMoveBox.ws_Create).
+ In those cases, one argument is provided (evt), and evt.data contains further information (ie.; which movebox to close)
+
+function wsMoveBox.ws_Close(athis)
+  Event handler for user specified close button -- closes the move box that is the button's parent.
+  If parent is not a move box, error,
+
+  This is a simple version of wsMmoveBox.ws_DoClose -- it is meant to be used in additon close buttons that are specified inside of the moveable box
+   -- rather than  close buttons created by wsMoveBox.ws_Create.
+
+  Examples:
+   <input type="button" value="Close this box" onClick="wsMoveBox.ws_Close(this)" >
+ or
+   $('#closeMeButton').on('click',wsMoveBox.ws_Close) ;
+   ....
+   <input type="button" value="Close me now" id="closeMeButton">
+
+function wsMOveBox.ws_DoZindex(e,idire)
+
+   Set the z-index of a move Box -- to on top, or behind, all other moveBoxes.
+      e: jQuery object pointing to a movebox. Or a string containing the id of a move box (does not need to start with a #)
+      idire: 1: move to on "top" of all move boxes,
+             0 (or any other number): move to "behind" all move boxes
+
+   Note that this only acts in relatiohship to other move boxes. Other container, with their own z-index, are ignored.
+   Thus, it is somewhat indeterminate if (after a z-index move) the moveBox may be behind, or in front of, non-moveBox
+   containers.
+
+   Setting the zIndex of all moveboxes to a relatively high value will tend to ensure that the moveboxes are always on top.
+
+  Caution: the css z-index attribute only works with containers that have the same parent.
+    In particular: when comparing containers that have different parent, the z-index of a child can never be greater than its parent.
+    That means that a moveBox that is under a container has an effective Z-index of this parent container.
+    
+    What does this mean? It is safest for all moveBoxes to be direct children of the document!
+    Othwerwise, wsMoveBoxDo.ws_Zindex might not work as expected.
+    
+    Details:  https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Positioning/Understanding_z_index/The_stacking_context
+
+
+function wsMoveBox.ws_desc(moveIcon)
+
+  Return a string with tips on using the move box
+
+   moveIcon is optional. If specified, should be a string that is used to display the "moveIcon".
+   For example:  '&#9995;' (a yellow palm).
+   If not specified, the default is '&#9769;'.
+
+   Or,
+        wsMoveBox.ws_desc(evt)
+   where wsMmoveBox.ws_desc is an event handler (of an inLine onClick) for an element that is inside of a move box.
+   In particular, a button created if noTips=0;
+
+   The tips will be displayed at the bottom of the move box container.
+
+       Special case: if a container with a class of ws_showContent_headers exists inside of the movebox,
+       the tips will be displayed at the top of ws_showContent_headers.
+
+   Note that clicking such a button again will remove these tips.
+
+
+function wsMoveBox.ws_DoExpand(e2,todo)
+
+   Set size of a moveableBox div : either  "near-full", or at original size
+
+      e2 : jquery object of the moveable box   (or string id of the moveBox object)
+      todo : 0 -- set to original size
+             1 -- expand to "near full screen"
+             2 -- toggle between these
+
+function wsMoveBox.ws_DoResize(specs,e2,itest)
+
+  Resize or move a moveableBox.
+  Nothing else changes (content stays the same, visiblity stays the same)
+
+  specs is an object with fields. You can specify one or more of them. Anything unspecified is not changed.
+            'top' : top of box (% or px, or em).
+            'left' : left of box (% or px, or em)
+            'width':  width of box (% of px, or em)
+            'height':  height of box (% of px, or em)
+
+        Optional spec:  'latest': 1 or 0 -- if 1, use the "latest" position and size when doing relative changes.
+                         Special value: 'latest':2 - reset the "latest" position to be the "original" position
+
+     Note: em, and %, are converted into pixels using the document's default font-size, and current document width and height
+
+     Specifying relative changes:
+         precede with a + or  - to increase or decrease by this much of the ORIGINAL (creation) size
+        (before user moved or resized the box),
+         Or:  if 'latest':1  changes are applied to the  latest size and position specifications (after most recent call to wsMmoveBox.ws_DoResize that used latest)
+
+         In the first case (latest=0): if creation width was 100 px,
+                  'width':'200px'   : width becomes 200px
+                  'width':'+200px': : width becomes 300px
+                  'width':'-20%'    : width becomes 80px
+                  'width':'150%'    : width becomes 150px
+
+         By default (with latest=0) after this kind of "relative" change, the "creation" (original) width is NOT reset to these values.
+         Hence, consecutive calls to wsMoveBox,ws_DoResize   work with the ORIGINAL size & position.
+
+          To make additive changes, use 'latest':1 (perhaps with 'latest':2 used in a first call, to ensure that the first value of the "latest" position
+          is the "original" position)
+
+  e2 : the jquery object of the moveable box. This MUST have a class of ws_moveBox!
+       Or, a string that is the id of the box (a '#' is prepended if necessary)
+       If not specified: an element with a ws_moveBox class is found (if more than one, which one is used is unpredictable)
+       If e2 does not point to a ws_moveBox classed object, return 0 (nothing is done)
+
+    itest : if specified, and 1 -- do NOT do the move. Just compute what the move would be, and return the results.
+
+
+  Typically (with specs and e2 specified) ...
+
+    a) the box is moved & resized
+    b) An object with old and new positions is returned
+       4  fields (top,left, height, and width), each of them a 2 element array of: [basePosition,newPositon]
+       (in pixels). basePosition is either the "original" or "latest"
+
+   If itest=1, step a is NOT done! The object returned is where the box WOULD be IF the move had hapened
+
+   Special cases
+    * specs='O' (capital o)  or specs={}
+      return the original position  as:  {'left':origLeft,'top':origTop,'height':origHeight,'width':origWidth}
+
+      example: origSpecs=wsMoveBox.ws_DoResize('O','#myMoveBox')
+
+    * specs='0' (zero) or specs='C'
+       return the current position as:  {'left':currentLeft,'top':currentTop,'height':currentHeight,'width':currentWidth}
+
+   * specs='L':
+      Does nothing, returns latest position
+      return the original position  as:  {'left':latestLeft,'top':latestTop,'height':latestHeight,'width':latestWidth}
+      Note:, if no 'latest=1' call ever made, returns original position
+
+    * specs='R' or specs={'left':'+0'}
+
+       Moves box to the original position and size! Returns {'left':[origLeft,origLeft] ... (similar for top,width, and height)
+
+       example: backToOrig=ws_DoResize({'left':'+0'},'#myMoveBox')
+            or:  backToOrig=ws_DoResizews_DoResize('R','#myMoveBox')
+
+  where the "currentxx" are numbers representing pixel locations (they are NOT strings ending in 'px')
+
+   Notes:
+
+     * when a moveBox is created, a ws_movebox_positionOriginal attribute is added to the element (that is being 'converted'
+       into a moveable box). This contains the "original" size and position. It is NOT changed by  wsMmoveBox.ws_DoResize.
+       Thus, relative changes (latest=0) are ALWAYS relative to these original specifications.
+       Example:   ws_movebox_positionOriginal="position=fixed,top=43px,left=1248px,height=363px,width=634px"
+
+     * move boxes are created with, and should ALWAYS have,  "position:fixed".
+       If not (if somehow it was changed), ws_moveBox may not behave properly!
+
+    * To create your own "restore size" button -- ws_doResize should be an event hander, with a how attribute
+       -- The buttons
+         <input type="button" value="restore this size" class="myRestoreSizeButtons" how="R" >
+         <input type="button" value="move to alternate location" class="myRestoreSizeButtons" how="top:300,left:200,height:50%,width:80%" >
+
+       -- The event handlersChange to some other size & position
+
+         $('.myRestoreSizeButtons').on("click",wsMoveBox.ws_doResize)
+
+wsMoveBox.ws_toPx(aa,asize0,bodyFontSize)
+
+This is used internally -- it is an alternative to using ws_moveBoxDoResize with itest=1
+
+   Convert a string containng a "size" into pixels.
+
+   aa: string. Can be (case insensitive): 'mmPx', 'mmEM', or 'mm%' (mm an integer or a decimal)
+       Or just a number, in which case integer conversion is done.
+   asize: the "document" size. Could be document.width, document.height, or whatever. It is what is used when 'nn%' is encountered
+   bodyFontSize: The pixel size of a character. It is used for 'nnEm':
+
+   If asize is not specified: the average of the document height and width is use
+   If bodyFontSize is not specified, the default font size is  used ($("body").css('font-size'))
+
+   Returns an integer representing the px size of aa
+
+II.b  : ESC Key stroke handler  -- semi deprecated.
+
+      We now recommend using the ws_escHandler function. But, this can be used if you will never have any other
+      "hide this element if esc hit" elements.
+
+         If you want to capture esc  -- to hide a box -- call the following (just once, say after all the wsMoveBox.ws_Create calls)
+
+            $(document).keyup(wsMoveBox.ws_doEsc) ;
+
+         On keyup, if an ESC is hit,  wsMoveBox.ws_doEsc will close move boxes, based on the "escapeOrder" values (largest first).
+
+
+
+II.c :  some html to display help on using moveable boxes
+
+This is an example of what is returned (as a string) when ws_moveBox_desc() is called. What actually is returned depends on what
+buttons were enabled or suppressed.
+
+<em>moveable boxes</em> are used to display a variety of content.
+  These <tt>display containers</tt> can be manipulated by you, the end user,
+    in a number of ways -- by clicking (or clicking and dragging) on buttons displayed in the corners!
+
+<ul class="help_moveBoxes_ul">
+  <li><span style="cursor:move;border:1px solid black">&#9769;</span> &nbsp; move the box... click, hold the mouse button down, move, and release.
+For some moveable boxes, you can also click-hold-move on the <span  style="cursor: move;background-color:#dbdbab;border:1px dotted gray">top border</span>
+  <li><span style="cursor: pointer;" >&#9195; </span> move the box to the foreground. Or right-mouse-click to move to the background.
+
+  <li><span style="cursor: pointer;" >&#128307; </span>  expand the box to cover most of the window. Click again to restore to prior size. This is not available on all moveable boxes!
+
+  <li><span style="cursor: pointer;border:1px solid black"> &neArr;  </span>&nbsp;  display the contents of the box in a new window
+  <li><span style="cursor: pointer;border:1px solid black"> &Chi;  </span>&nbsp;  hide the box
+  <li><span style="cursor: ne-resize;border:1px solid black"> &nearr; </span>&nbsp;  expand the box .. click, hold the mouse button down, move (to resize in that direction), and release
+<br> the &searr;, &swarr;, and &nwarr; buttons can be used in similar fashion.
+  <li>If you hit the <tt>Esc</tt> key, these boxes will be hidden one-at-a-time.
+</ul>
+
+
+</div>

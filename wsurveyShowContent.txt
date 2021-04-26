@@ -1,0 +1,399 @@
+April 2020 (updated Jan 2021)
+
+Description of wSurvey's wsurveyShowContent library
+
+These functions are used to dynamically write content (HTML or text) to a moveable/resizeable DIV (or other container).
+The notion: one creates a container (such as a DIV)  which we call a "showContent" container
+     This container has content you would like the end user to be able to move, or resize.
+     And it can be dynamically updated!
+
+Notes:
+   * wsuveyShowContent  is built using wsurveyMoveBoxes.
+   * jslib/examples/testShowContent.htm contains a demo of wsurveyShowContent
+   * For a simpler (though somewhat deprecated) method of creating a dynamically updateable moveable box, see wsurveyShowAlert.txt
+
+
+I. Installing
+
+ wsurveyShowContent uses jQuery and a few wSurvey libraries
+
+ Hence, you could use the following in html files:
+
+  <script type="text/javascript" src="/wsurvey/publicLib/jquery-1.11.3.min.js"></script>
+  <script type="text/javascript" src="/wsurvey/jsLib/wsurveyUtils1.js"></script>
+  <script type="text/javascript" src="/wsurvey/jsLib/wsurveyMoveBoxes.js"></script>
+  <script type="text/javascript" src="/wsurvey/jsLib/wsurveyShowContent.js"></script>
+
+II. Basic useage
+
+ In a javascript function (say, an .onLoad function), call:
+
+    ws_showContent_init('anId',opts)
+
+  where
+        anId : the id of a container (a DIV) that will created. This is where content will be written to.
+              If anId=0 or '',  or if no arguments are used (that is, ws_showContent_init() is called),
+              an id of 'ws_showContent_main' is used.
+
+              You can create multiple, independent, "showContent" containers by calling ws_showContent_init with different ids.
+
+        opts: an associative array with a number of options. If not speciifed, defaults are used.  See below for more details
+
+  This will create, and add to the bottom of the html document, a container with an id of  "anId", that is setup to be a moveable box.
+  This container has an upper "header" row that is not scrollable. And a lower "content" multi-row section that is scrollable.
+
+    Hint: after calling ws_showContent_init, you can hide the "empty" container by immediately calling
+        ws_showContent()
+     or
+        ws_showContent('',{'id':'anid','hide':1})
+
+  In addition to the "moveable box" controls (resize, etc) -- a few other controls can be added to the header row. These include
+  "scroll to top of content" button, and "view prior or next" content icons.
+
+  It is easy to create several different, and independent,showContent containers. Just be sure ...
+      * to specify unique ids
+      * it is wise to specify a different screen location for each one -- so they do not overlap.
+      * be careful when you use ws_showContent to write content to these containers -- you must specify an 'id' in the options (see below).
+
+
+IIa. Writing dynamic content using ws_showContent()
+
+  After ws_showContent_init is called, a "moveable box" is created -- one with a "header" containing default icons, and an empty "contents"
+
+  You can then write text or html to this "contents" area.
+  Often, this content is dynamic-- say, it changes as a user interacts with forms.
+
+  This is done using the ws_showContent function
+
+       eobj= ws_showContent(acontent,optsC)
+
+   where
+         aContent: any text or html content
+         optsC : an associative array of options
+
+   and
+     eobj = jQuery object of the moveable box.
+     Or, the requested information (such as 0/1 if 'visible':1 specified in opts)
+
+   To just write content to the "default" showContent container, optsC need not be specified.
+
+   Shortcuts:
+      *  if optsC equals 'idString', it is converted to {'id':'idString'}
+      *  ws_showContent(acontent,id,action)
+             is a shortcut for
+         ws_showContent(acontent,['id':id,action:acontent})
+            where id should be a string (the id of the ws_showContent box), and actionVal should be a string (one of the "control" options below )
+
+         For example:    ws_showContent(1,'myContentBox','hide') or   ws_showContent('',{'id':'myContentBox','hide':1})
+                    -- will hide the myContentBox container
+
+
+        DEPRECATED:  Note that an action of "1" is special: it  means 
+                         "close the ws_showContentBox containing the element invoking this function call"
+                    Use ws_showContent_close (as an event handler).
+
+
+   Indices of optsC:
+
+        id: an id. The id of the showContent container (as specified in ws_showContent_init).
+            If not specified, the default ('ws_showContent_main') id is used.
+
+       append:  If 1, append aContent to the bottom of the 'content' area. If not 1 (or if not specified), aContent overwrites
+                  anything in the 'content' area
+
+       contentOnly: If 1, the content area is updated (either rewritten, or appended to). The headers area is NOT changed.
+
+       doMinimize: If not 0, enable a "minimize" button (default is 0).
+                      If this is specified, you MUST specify an element in 'headers' (see below for details)
+                      If '1', the value of the button is not changed. Otherwise it is set to the value of doMinimize
+                   Example:  'doMinimize':'Minimize!'
+                  See below for setup details.
+
+       dom:    If 1, return a jQuery object, that points to the  contents of the 'content'  area. In this case, aContent is ignored.
+               If get is specified, this is ignored.
+
+               Note that a basic call to ws_showContent (such as ws_showContent('my string ',{'id':'storyBox'}))
+               will return the jQuery object pointing to the parent showContent container -- that contains the "content area" returned by 'dom'.
+
+
+       dims :  If 1, return a 2 element array containing [width,height] of the content area (in pixels)
+               If 2, same, but return as em
+
+      events: an array of "event" specificatons.
+               Each row in the array is a 3 element array with components: 'eventType', 'domString', afunction
+
+               After loading the content, event handlers will be assigned to elements (in aContent) that match a domString.
+
+               For example, if events is a one row array:
+                   events[0]=['click','.myHelpButtons',myHelpFunction]
+               Then
+                 a) All elements (in aContent) with a class='myHelpbuttons' are found
+                 b) A .on('click',myHelpFunction) is assigned to each of these.
+               Typically, these elements will contain attributes that myHelpFunction will use.
+
+    foreGround: name attribute to assign a "move to foreground, RMB to move to background" button (in the current showContent box -- headers and content).
+                For example, you could include
+                   <input type="button" name="moveFore" value="uArr;" title="click to move to foreground"> ';
+
+                   and 'foreGround':'moveFore'
+
+
+      get: 'content' or 'header'. Return the contents of the 'content' or 'header' area. In this case, aContent is ignored.
+           In contract to "dom", this returns a string.
+
+      headers: If specified, can be any html or text content (though it should fit on one line).
+                 This is displayed in the "transient" headers area -- after the permanent headers.
+                 This is only displayed on this call to ws_showContent -- on subsequent calls these headers are erased (or overwritten)
+
+      hide: If 1, hide the showContent container (the one specified by anid). In this case, aContent is ignored.
+           Special case:
+               ws_showContent()
+            is the same as:
+               ws_showContent('',{'id':'ws_showContent_main','hide':1});
+
+           If show and hide are both specified (and equal to 1), hide is used.
+
+           Special values:
+              If hide>1, then a fadeOut (rather than a simple hide) is used.
+              The value should be the number of milliseconds the fadeout will take (using the "swing" easing method of jQuery .fadeOut);
+
+           Note: 'close' is a synonym for 'hide'
+
+       noHeader : If 1, do NOT display the 'header' area (both permanent and transient headers). Otherwise, the 'header' area is displayed.
+
+       noHeaderPerm: If 1, do NOT display the headers created by ws_showContent_init. This is typically the closer, history, and the scroll icons -- but
+                     may include any other "permanent" headers.
+                     Transient headers WILL be displayed (as described below)
+                     
+       onTop : 0, 1, or -1.  Change z-index of the showContent container.
+               0 : The default. Do NOT change z-index
+               1 : Move to foreground -- will be above all other show content (and moveBox) containers
+               -1 : Move to background -- will be below all other show content (and moveBox) containers
+               
+               The 1 and -1 options simulate clicking on the moveBox zIndexShow button
+
+      show: If 1, show the showContent container (the one specified by anid). In this case, aContent is ignored.
+            Whatever content was previously written (to this showContent) container will still be there.
+            If show and hide are both specified (and equal to 1), hide is used.
+
+           Special values:
+              If show>1, then a fadeIn (rather than a simple show) is used.
+              The value should be the number of milliseconds the fadein will take (using the "linear" easing method of jQuery .fadeIn);
+
+      toggle: Toggle between showing, and hiding.   
+              Values of 1, or > 1. If  > 1, a fade in or a fadeout is done.
+              Basically: toggle examines the visiblity of the contentBox, and then "calls" show or hide.
+              
+      visible: If 1, return a 0/1  flag. 0: show content box is NOT visible. 1: is visible.
+               If get or dom is specified, this is ignored.
+
+      Hints: 
+        *to just update headers....
+                ws_showContent('',{'headers':'my new header ','append':1})
+        * to check if a show content container is open (visible):
+            isVis=ws_moveBoxes(1,
+
+
+
+IIb. opts (in ws_showContent_init)
+
+     Most of indices that can be specified in opts will control the setup of the "moveable box".
+           These are: top, left, width, height, escapeOrder, expandBox, zIndexShow, callFunc, noCloser, noResizer, noHider, noMover
+      wsurveyMoveBoxes.txt explains these in detail.
+
+      In general, it is not necessary to specify these options -- the defaults (used by ws_showContent_init) are recommended.
+
+      However:
+        * if you specify multiple showContent containers, you should specify the top and left options (so they don't overlap too much)
+
+        * callFunc may be useful.
+           'callFunc':  'funcName, title'  : funcName is a string specifying a function to call when a double arrow icon is clicked
+                        (in the moveable box NE corner), and title is the title displayed for this double arrow.
+                        Note that when funcName is called, it passed a jQuery object pointing to the moveAble window.
+
+        If not specified, 'ws_showContent_toWindow,show content in a new window' is used -- this will show the content area in a new window
+
+        To suppress this "show content in a new window" default, use 'callFunc':0
+
+     The options directly used by ws_showContentInit are:
+
+         callFuncHistory : default of ''. Used when noHistory=0. That is: when the "history" buttons ARE displayed.
+                 Should be the name of a function that will be called AFTER the prior (or next)
+                 content is (re) displayed. This will be called as:
+                    window[callFuncHistory](e1,idire)
+                      where:
+                           * e1 is a pointer (ajQUery obfsject) to the  "history" (forward or backward) button that was clicked.
+                           * idire=1 means forward , idire=0 means backward,  button was clicked
+                      *  called AFTER the previous (or next) content is (re) displayed.
+                      *  The default (of '') is to NOT call any such function.
+
+                  This can be used to reattach event handlers (which are NOT re stored on re display).
+
+         enableEsc : The value of the escIndex. Or, enable ws_escapeHandler escape handler
+             There are two modes: enable ws_showContent, or specify details used by ws_escapeHandler
+             If enableEsc='0', nothing is done.
+             The default is enableEsc='1'
+             a) If '1'
+                The ws_showContent escape handler is enabled.
+                     If esc is entered anywhere (detected using a keyup event), a visible moveable box is closed.
+                    For example: a moveable box created (and used) by ws_showContent_init!
+                        * If no moveable boxes are visible, the keyup propagates up. If one is visible (and then hidden), the keyup does NOT propagate.
+                        * If the keyup is not an esc key, the keyup propagates up.
+
+                  Note that the order of execution of this keyup handler, relative to any other keyup handler assigned to the document, is indeterminate.
+                   If you have complex keyup handlers, this may not work as expected.
+                   
+          b) If > 1.
+             An "escIndex" attribute is added to the moveable box.
+             This is used by the  ws_escapeHandler function.
+             Higher values of "escIndex" are "hidden" first.
+             
+             Thus: if this value of enableEsc is used, you MUST also initalize ws_escapeHandler
+             For example :  ws_escapeHandler('init');
+
+
+
+         headers :  Default of ''.  Additional headers added to the "permanent" headers area.
+                 Can be any text or html -- but  should be fairly short (and just one line)
+                 These will always be displayed when ws_showContent is called.
+
+         noCloser2 : Default of '0'. If '1', do NOT show an extra "close" button (in upper right corner).
+                     Otherwise: a 'value,title,class' (in a csv) -- the value of the button, and its mouseover title  -- using a css class.
+                     title and class are optional. If not specified: title='close', and no class is used.
+
+                  Notes:
+                      * the "noCloser" button is used to control the "close" button in the moveable box!
+                      * This "extra" close button is for convenience -- the moveBox close icon is small and out of the way,
+
+         noHistory: Default of '0'. If '1', do NOT show the history (prior and next) icons.
+                    The history buttons allow the user to view prior content written with ws_showContent
+
+         noScroll: Default of '0'. If '1', do not show several  "scoll " buttons.
+                   When enabled,  4 buttons are displayed toward the right end of the headers row.
+                     An up, right, down, and left arrow.
+                        * clicking one of them scrolls the content window 10px (about one row, or one space)
+                        * RMB click scrolls to top/right border/ bottom/ left border
+                        * A couble click (2 clicks within a 1/4 second) scrolls 150 px
+
+                     Note: noTopScroll is a synonym for noScroll. If both specified, noTopScroll is used.
+
+         noShadow:  Default of '0'. If '1', do NOT display a "shadow" around the moveable box.
+
+         zIndex: The z-index to assign to this box. If not specified, a value of "50" is used. Higher values are displayed on top of lower values.
+
+                 Notes:
+                   *  the zIndexShow option (used by ws_moveBoxes) can be used to display a "bring forward/ bring back" icon (to change
+                      the z-index of a ws_showContent box on-the-fly.
+                   *  the onTop option of ws_showContent can be used to "bring forward/bring back" a showContent container
+                   *  z-index is a synonym for zIndex. If both specified, z-index is used.
+
+
+III. Using the minimize and maximize features
+
+   It is straightforward to include a "minmize" button in a showContent container.
+   When clicked, this will:
+     a) Read the current contents of the showContent container (that this minimize button is inside of)
+     b) Show a "maximize" button that, when clicked, will redisplay this current contents (in this showContent container)
+
+   Thus: one can minimize a container, look at something else, and then maxmize.
+   And several versions can be simultaneously minimized (so that different content is displayed when one of several "maximize" buttons are clicked)
+
+   How?
+
+      a) Create a "transient" header that contains an element (say, an input elememt) that has:
+           i) a class="ws_showContent_minimize_button"
+          ii) a "where" element that points to an element OUTSIDE of the showContent container.
+        For example:
+           'header':'<input type="button" class="ws_content_minimize_button" value="Minimize this" where="myMaximizeButton" >'
+
+      b) Create a "maximize" button  -- outside of the showContent container -- with an id equal to this "where" attribute.
+
+        For example:
+            <span class="ws_showContent_maximize" id="myMaximizeButton" title="re display!" >&#8661;</span>
+
+        Notes:
+          * &#8661; is a double up/down arrow.
+          * the  class="ws_showContent_maximize" is optional (it is a built in class that might be useful)
+
+     c) In a call to ws_showContent displaying the content you want minimizable, include this transient header AND doMinimize
+           Example:  ws_showContent('my great stuff ',{'header':'minimize button','doMinimize':1} );
+         Or, if you want to specify the displayed value of the minimize button, something like:
+            Example:  ws_showContent('my great stuff ',{'header':'minimize button','doMinimize':'\ud83e\udc3d'} );
+         will use a squooshed arrow.
+          NOTE: To use an html entity, you must use a unicode value (not a &#nnnn; value).
+                For example: 
+                   '\ud83e\udc3d' is &#129085; (upwards compressed arrow)
+                  '\u2796'  is &#10134; (heavy minus sign)
+
+     That's it. Be sure to include the "maximize" button somewhere it can be seen (after the showContent window is minimized)
+
+     Note that if the where element does NOT match an element, an error message is shown.
+
+IV. Other functions
+ ws_showContent_close(this)
+    or
+ ws_showContent_close(fadeOutM,ebox)
+  
+     Can be used as an inline event handler (say, for a <button>) :
+           onClick="ws_showContent_close(this)"
+     Otherwise, assign as click (or whatever) event handler to an button or other element.
+
+     If called as a stand alone function,
+          fadeOutM is the "fadeout". If 0, immediate close
+          ebox should be a jquery object pointing to the showContent box,
+          or a string containing its id.
+
+       This is essentially the same as : ws_showContent(1,ebox,'hide')
+
+    Will close the showContent container that this "button" is in.
+     Returns error messages if this is not withing a showContent container.
+
+      This can be used in addition to the closer buttons specified in  ws_showContent_init
+
+     Option: include a 'how=ihow' attribute.
+         If ihow=1 (or if not specified): hide
+         Otherwise, fadeout over ihow milliseconds
+
+
+   eJquery=ws_showContent_find(adom,anid)
+
+     Find element inside a showContent window.
+        adom: jquery string to identify object.
+             examples: '#myDIv', '[name="thisBoxButton"]',  '.hotLink'
+       anid: id of the show content box to look within. If not specified, or '' or 0, use the default ('#ws_showContent_main')
+             You do NOT have to preface "anid" with a "#", but it won't hurt if you do.
+
+     eJquery is a jquery object (with length 0, if no match)
+
+     example:
+         e2=ws_showContent_find('[name="ndScheShw_helpViewer"]' ,'retsim_notesViewer');
+
+
+
+ ws_showContent_resizeBox(evt)
+
+   **  Note: to use code to change showContent box and position, use the ws_moveBoxDoResize (see wsMoveBoxes.txt for the details)  **
+
+
+   A click handler to resize & reposition a showContent box. When clicked, a menu is displayed at the top of the content area of
+   the showContent box. The user can specify top,left, height and width.   After confirming the change, the user closes
+   this menu to return to prior content
+
+   This click handler MUST be placed inside of the showContent box it is meant to change!  Otherwise, it won't know what
+   to change. For example, include this as a header:
+       <input type="button" value="&#9040;" title="View a resize and reposition this box menu" " onClick="ws_showContent_resizeBox(this)" >
+
+   When a user open this menu, he sees a form with the "permanent" size and position values as defaults. These are the values the showContent
+   box was craeated with. THey do NOT change as the box size & positon changes (either due to user actions, or because of calls to
+   ws_showContent_resizeBox.
+
+   The size and position can be specified using pixels (i.e; 500px), em (i.e.; 25em), or % (i.e.; 50%) of the current window height (or width).
+
+   Or, you can specify relative increase (over the "permanent" sizes) by  using '-xx' (for a decrease) of '+xx' for an increase.
+   Where 'xx' is 'nnEm', 'nnPx', or 'nn%'.
+   For example: if the current height is 500px, and you specify '+10%', the new size will be 550px.
+
+   Note: to use code to change showContent box and position, use the ws_moveBoxDoResize (see wsMoveBoxes.txt for the details)
+
+
+
