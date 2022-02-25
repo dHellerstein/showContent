@@ -19,6 +19,6 @@ A number of features  are supported, including:
   c) Hide the container, and show an icon to redisplay it.
   d) Scroll up/down and left/right icons can be displayed in the heder.
 
-Each library has an extenstive documentation (in a .txt file). And a few example .html files are also provided..
+Each library has an extenstive documentation (in a .txt file). And a few example .html files are also provided.. 
 
 
