@@ -1,6 +1,6 @@
 ## showContent is semi-deprecated!
    We recommend using the wsurvey.floatingContent.js, which is part of the wsurvey.lib repository.
-   [wsurvey.lib](wsurvey.lib) 
+   [wsurvey.lib](https://github.com/dHellerstein/wsurvey.lib) 
    
 # showContent
 Javascript libraries to create moveable &amp; resizable dynamically updated containers.
