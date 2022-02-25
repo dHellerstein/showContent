@@ -1,5 +1,5 @@
 ## Feb 2022: showContent is semi-deprecated!
-   We recommend using  wsurvey.floatingContent.js, which is part of the wsurvey.lib repository.
+   We recommend using  wsurvey.floatingContent.js, which is part of the   
    [wsurvey.lib repository](https://github.com/dHellerstein/wsurvey.lib) 
    
 # showContent
